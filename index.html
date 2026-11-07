@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audio Combiner — Mix & Export</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 font-sans">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <header class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold tracking-tight">
+        <span class="text-cyan-400">Audio</span> Combiner
+      </h1>
+      <p class="text-slate-400 mt-1 text-sm md:text-base">
+        Layer multiple sounds, preview them live, and export a single mixed file.
+      </p>
+    </header>
+
+    <!-- Input section -->
+    <section class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Add Sound — File</h2>
+        <label class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-700 rounded-xl py-8 cursor-pointer hover:border-cyan-500 transition-colors">
+          <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z"/>
+          </svg>
+          <span class="text-sm text-slate-300">Click to choose audio files</span>
+          <span class="text-xs text-slate-500">MP3, WAV, OGG, M4A…</span>
+          <input id="fileInput" type="file" accept="audio/*" multiple class="hidden" />
+        </label>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Add Sound — URL</h2>
+        <div class="flex gap-2">
+          <input id="urlInput" type="url" placeholder="https://example.com/sound.mp3"
+            class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+          <button id="loadUrlBtn"
+            class="shrink-0 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+            Load from Link
+          </button>
+        </div>
+        <p id="urlStatus" class="text-xs mt-2 h-4 text-slate-400"></p>
+      </div>
+    </section>
+
+    <!-- Track list -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">
+        Tracks <span id="trackCount" class="text-cyan-400">(0)</span>
+      </h2>
+      <ul id="trackList" class="space-y-2">
+        <li id="emptyState" class="text-sm text-slate-500 py-6 text-center border border-dashed border-slate-800 rounded-xl">
+          No sounds yet — upload a file or paste a link above.
+        </li>
+      </ul>
+    </section>
+
+    <!-- Preview + export -->
+    <section class="grid md:grid-cols-2 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Preview</h2>
+        <button id="previewBtn"
+          class="mb-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors">
+          ▶ Test / Preview Combined Sound
+        </button>
+        <div class="flex-1">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+            <span id="progressLabel">Ready</span>
+            <span id="timeLabel">0:00 / 0:00</span>
+          </div>
+          <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-cyan-500 rounded-full transition-[width] duration-100" style="width:0%"></div>
+          </div>
+          <canvas id="visualizer" class="w-full h-24 mt-3 bg-slate-950 rounded-lg border border-slate-800"></canvas>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Export</h2>
+        <div class="flex gap-2 mb-4">
+          <select id="formatSelect"
+            class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
+            <option value="wav">WAV (uncompressed)</option>
+            <option value="mp3">MP3 (via lamejs)</option>
+            <option value="ogg">OGG / Opus</option>
+          </select>
+        </div>
+        <button id="exportBtn"
+          class="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors">
+          ⬇ Download Mixed Sound
+        </button>
+        <p id="exportStatus" class="text-xs mt-2 h-4 text-slate-400"></p>
+        <p class="text-xs text-slate-500 mt-auto pt-4">
+          Export renders offline at the length of your longest track. MP3 uses the lamejs CDN; OGG uses MediaRecorder where supported.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-medium shadow-lg hidden"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
